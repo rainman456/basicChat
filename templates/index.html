@@ -1,0 +1,128 @@
+﻿ {% load static %} 
+<!-- chat/templates/chat/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Chat Rooms</title>
+</head>
+<body hx-ext="ws" >
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script src="{% static 'js/ws.js' %}"></script>
+
+
+    <h2>Anastais</h2>
+    <p>Room Code:519</p>
+    {# <div hx-ws="connect:/chat/{{ slug }}/"> #}
+    <!--
+        <form hx-ws="send:submit">
+            <input name="message">
+            <input type="submit">
+        </form>  
+    </div>
+    -->
+    <div ws-connect="/ws/chat/">
+        <form id="myForm" ws-send>
+            <input name="message" id='messager' >
+            <button type="button" onclick="sendMessage()">Send</button>
+        </form>
+        <div id='messages'></div>
+    </div>
+
+	<script>
+		// log all events triggered by htmx -- usefull for debuging
+        
+        htmx.logger = function(elt, event, data) {
+            if(console) {
+                console.log("INFO:", event, elt, data);
+            }
+        }
+           htmx.logAll();
+         function sendMessage() {
+            // Find the form
+            htmx.trigger(document.getElementById('myForm'), 'submit');
+            document.getElementById('messager').value = '';
+        }
+        
+        const name = generateUniqueId();
+
+        function generateUniqueId() {
+            return 'user-' + Math.random().toString(36).substr(2, 9);
+        }
+            
+               
+                document.addEventListener('htmx:wsConfigSend', function(evt) {
+                    evt.detail.parameters['sender'] = name; // add a new parameter into the mix
+                    //console.log(name);
+                    //if (sendMessage){
+                    //    evt.detail.parameters['outgoing_message'] = true;
+                    //}
+                });
+    
+                document.addEventListener('htmx:wsAfterMessage', function(evt) {
+                    //let dim=evt.detail.message;
+                    console.log(evt.detail.message);
+                    console.log(typeof evt.detail.message);
+                    const parsedData = JSON.parse(evt.detail.message);
+                    const username = parsedData.username;
+                    console.log(parsedData); 
+                   console.log(username); 
+                   console.log(name); 
+                  //  if (username === name){
+                //        htmx.addClass(htmx.find('#message'), 'me');}
+                //else{
+                //    htmx.addClass(htmx.find('#message'), 'message');}
+
+    // Convert back to a JSON-formatted string
+    const chatContainer = document.getElementById('messages');
+
+    const isMe = username === name;
+    const sourceClass = isMe ? 'me' : 'message';
+    
+
+    
+
+    // Create a new message element
+    const messageElement = document.createElement('div');
+    messageElement.classList.add( sourceClass);
+    messageElement.innerHTML = parsedData.message;
+    chatContainer.appendChild(messageElement);
+
+    // Scroll to the bottom of the chat container
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+});
+    
+               
+
+        
+	</script>
+    <style>
+        
+ .me {
+    display:inline;
+    float:right;
+    background:#DCEDE0;
+    color:#56A668;
+    padding:10px 20px;
+    border-radius:4px;
+    width:auto;
+    margin:10px 10px 0;
+    min-width:440px;
+    clear:both;
+    
+}
+
+.message {
+    background:#efefef;
+    padding:10px 20px;
+    border-radius:4px;
+    width:auto;
+    display:inline;
+    float:left;
+    margin:10px 10px 0;
+    min-width:440px;
+    clear:both;
+}
+    </style>
+</body>
+</html>
